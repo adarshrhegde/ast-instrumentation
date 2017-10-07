@@ -1,10 +1,15 @@
 package com.uic.ahegde5.instrumentation.parser;
 
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.eclipse.text.edits.TextEdit;
 
 import java.util.*;
 
@@ -139,14 +144,12 @@ public class InstrumentationVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(EnhancedForStatement enhancedForStatement) {
-        System.out.println("Enhanced for statement " + compilationUnit.getLineNumber(enhancedForStatement.getStartPosition()) + " " + enhancedForStatement.toString());
         visitStatement(enhancedForStatement);
         return super.visit(enhancedForStatement);
     }
 
     @Override
     public boolean visit(ReturnStatement returnStatement) {
-        System.out.println("Return statement " + compilationUnit.getLineNumber(returnStatement.getStartPosition()) + " " + returnStatement.toString());
         visitStatement(returnStatement);
         return super.visit(returnStatement);
     }
@@ -161,6 +164,20 @@ public class InstrumentationVisitor extends ASTVisitor {
     public boolean visit(SwitchStatement switchStatement) {
         visitStatement(switchStatement);
         return super.visit(switchStatement);
+    }
+
+    @Override
+    public boolean visit(TypeDeclarationStatement typeDeclarationStatement) {
+
+        System.out.println("Type declaration statement >>" + typeDeclarationStatement.getDeclaration().toString());
+        return super.visit(typeDeclarationStatement);
+    }
+
+    @Override
+    public boolean visit(ExpressionStatement expressionStatement) {
+        //System.out.println("Expression statement >> " + expressionStatement.toString());
+        //visitStatement(expressionStatement);
+        return super.visit(expressionStatement);
     }
 
     public void visitStatement(Statement statement) {
@@ -185,7 +202,9 @@ public class InstrumentationVisitor extends ASTVisitor {
             type = "Switch Case";
         }*/ else if (statement instanceof VariableDeclarationStatement) {
             type = "Assign";
-        }
+        } /*else if (statement instanceof ExpressionStatement) {
+            type = "Expression";
+        }*/
         String s = "TemplateClass.instrum(" + lineNo + ", \"" + type + "\"";
 
         statement.accept(new ASTVisitor() {
@@ -210,7 +229,28 @@ public class InstrumentationVisitor extends ASTVisitor {
         textElement.setText(s);
 
         ListRewrite listRewrite = astRewrite.getListRewrite(statement.getParent(), Block.STATEMENTS_PROPERTY);
-        listRewrite.insertBefore(textElement, statement, null);
+        if(type.equals("Assign")){
+            listRewrite.insertAfter(textElement, statement, null);
+        } else {
+            listRewrite.insertBefore(textElement, statement, null);
+        }
+
+    }
+
+    public void addImport(String importStatement){
+        //ListRewrite listRewrite = astRewrite.getListRewrite(compilationUnit.findDeclaringNode(), Block.STATEMENTS_PROPERTY);
+        //listRewrite.insertBefore(textElement, statement, null);
+        System.out.println(compilationUnit.getTypeRoot() instanceof ICompilationUnit);
+        ImportRewrite importRewrite = ImportRewrite.create(compilationUnit, true);
+        importRewrite.addImport(importStatement);
+        try {
+            TextEdit textEdit = importRewrite.rewriteImports(null);
+            textEdit.apply(sourceDocument);
+        } catch (CoreException e) {
+            e.printStackTrace();
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
 
     }
 

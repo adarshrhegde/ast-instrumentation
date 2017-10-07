@@ -20,11 +20,15 @@ public class InstrumentationParser {
 
     private String directoryPath;
 
+    private String backupPath;
+
     public InstrumentationParser() {
     }
 
-    public InstrumentationParser(String directoryPath) {
+    public InstrumentationParser(String directoryPath, String backupPath) {
+
         this.directoryPath = directoryPath;
+        this.backupPath = backupPath;
     }
 
 
@@ -36,8 +40,7 @@ public class InstrumentationParser {
         parser.setCompilerOptions(options);
 
         String unitName = filePath.substring(filePath.lastIndexOf("\\") + 1,filePath.length());
-        System.out.println("======================================================================");
-        System.out.println("File name : " + filePath);
+        System.out.println("File loaded : " + filePath);
         parser.setUnitName(unitName);
         String[] sources = { directoryPath };
        // Document document = new Document("D:\\IntellijWorkspace\\JavaProblems\\src");
@@ -61,7 +64,7 @@ public class InstrumentationParser {
     public void execute(){
 
         try {
-            List<String> filePathList = JavaFileListing.listFilesInDirectory(directoryPath);
+            List<String> filePathList = JavaFileListing.listFilesInDirectory(directoryPath, backupPath);
             InstrumentationVisitor instrumentationVisitor = new InstrumentationVisitor();
             for(String filePath : filePathList) {
 
@@ -81,7 +84,7 @@ public class InstrumentationParser {
                 } catch (BadLocationException e) {
                     System.out.println(e);
                 }
-
+                //instrumentationVisitor.addImport("com.uic.ahegde5.instrumentation.utility.TemplateClass");
                 FileUtils.write(new File(filePath),instrumentationVisitor.getSourceDocument().get());
 
             }

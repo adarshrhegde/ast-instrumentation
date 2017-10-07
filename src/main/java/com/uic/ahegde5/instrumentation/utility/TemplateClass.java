@@ -4,15 +4,16 @@ import java.util.Map;
 
 public class TemplateClass {
 
-    public static void instrum(int lineNo, String operation, Map<String,String> vars){
+    public static void instrum(int lineNo, String operation, Pair... pairs){
 
-        System.out.print("Line" + String.valueOf(lineNo) + " " + operation + " ");
-        if(null != vars && vars.isEmpty())
-        for (Map.Entry<String,String> entry : vars.entrySet()) {
-            System.out.print(", ");
-            System.out.print(entry.getKey() + " = " + entry.getValue());
-        }
-        System.out.println();
+        try {
+            System.out.print("Line" + String.valueOf(lineNo) + " " + operation + " ");
+            if (null != pairs && pairs.length > 0)
+                for (Pair pair : pairs) {
+                    System.out.print(", " + pair.toString());
+                }
+            System.out.println();
+        } catch (Exception e){}
     }
 
 
