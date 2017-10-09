@@ -4,6 +4,8 @@ Applications and their repositories:
 
  Instrumenting Application(ast-instrumentation) - Adarsh_Hegde_hw2  |   
  Instrumented Application (Apache Commons Lang) - Instrumentated_App_Hw2
+ 
+To instrument the application from scratch use the source code of HW1 - Adarsh_Hegde_hw1. This is the same code used for this application.
 
 Read access to both repositories is provided to graders
 
