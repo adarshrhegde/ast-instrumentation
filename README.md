@@ -1,9 +1,9 @@
 **Instrumentation of Apache Commons Lang**
 
 Applications and their repositories:
-1. Instrumenting Application(ast-instrumentation) - Adarsh_Hegde_hw2
 
-2. Instrumented Application (Apache Commons Lang) - Instrumentated_App_Hw2
+ Instrumenting Application(ast-instrumentation) - Adarsh_Hegde_hw2
+ Instrumented Application (Apache Commons Lang) - Instrumentated_App_Hw2
 
 Read access to both repositories is provided to graders
 
