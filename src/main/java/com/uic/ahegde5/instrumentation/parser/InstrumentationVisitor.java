@@ -1,21 +1,16 @@
 package com.uic.ahegde5.instrumentation.parser;
 
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
-import org.eclipse.text.edits.TextEdit;
 
 import java.util.*;
 
 public class InstrumentationVisitor extends ASTVisitor {
 
-    List<MethodDeclaration> methods = new ArrayList<>();
+    List<String> methods = new ArrayList<>();
 
     List<SimpleName> simpleNames = new ArrayList<>();
 
@@ -27,7 +22,9 @@ public class InstrumentationVisitor extends ASTVisitor {
 
     private ASTRewrite astRewrite;
 
-    private List<String> ignoredSimpleNames = Arrays.asList(new String[]{"print", "length","println"});
+    private List<String> ignoredSimpleNames = Arrays.asList(new String[]{"print", "length","println", "comparison", "negated", "start", "end","buffer","errorIfNoSemiColon","semiColonRequired","strategy","wrappedFactory","result","messagePrefix","useOwner","parameterizedTypeArguments","newCodePoint","result"});
+
+    private String className;
 
     public InstrumentationVisitor() {
     }
@@ -78,43 +75,21 @@ public class InstrumentationVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(MethodDeclaration method) {
-
-        methods.add(method);
-        /*AST ast = compilationUnit.getAST();
-        MethodInvocation methodInvocation = ast.newMethodInvocation();
-        QualifiedName qualifiedName = ast.newQualifiedName(ast.newSimpleName("System"),ast.newSimpleName("out"));
-        methodInvocation.setExpression(qualifiedName);
-        methodInvocation.setName(ast.newSimpleName("println"));
-        StringLiteral literal = ast.newStringLiteral();
-        literal.setLiteralValue("Hello World");
-        methodInvocation.arguments().add(literal);
-
-        Statement statement = ast.newExpressionStatement(methodInvocation);
-        ASTRewrite astRewrite = ASTRewrite.create(ast);
-
-        ListRewrite listRewrite = astRewrite.getListRewrite(method.getBody(),Block.STATEMENTS_PROPERTY);
-        listRewrite.insertLast(statement,null);
-
-        try {
-            org.eclipse.jface.text.Document document = new org.eclipse.jface.text.Document(FIleUtility.readFileToString(filePath));
-            TextEdit edits = astRewrite.rewriteAST(document,null);
-            edits.apply(document);
-            System.out.println(document.get());
-            FileUtils.write(new File(filePath),document.get());
-
-        } catch (BadLocationException e) {
-            System.out.println(e);
-        } catch (IOException e) {
-            System.out.println(e);
-        }*/
-
+        className = getClassName();
+        methods.add(method.getName().getIdentifier());
         return super.visit(method);
 
     }
-/*
-    ImportRewrite importRewrite = ImportRewrite.create(compilationUnit,true);
-        importRewrite.addImport("com.uic.ahegde5.instrumentation.utility.TemplateClass");
-    */
+
+    @Override
+    public boolean visit(MethodInvocation method) {
+        methods.add(method.getName().getIdentifier());
+        return super.visit(method);
+    }
+
+    private String getClassName() {
+        return filePath.substring(filePath.lastIndexOf("\\")+1,filePath.lastIndexOf("."));
+    }
 
     @Override
     public boolean visit(VariableDeclarationStatement variable) {
@@ -124,7 +99,6 @@ public class InstrumentationVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(IfStatement ifStatement) {
-
         visitStatement(ifStatement);
         return super.visit(ifStatement);
     }
@@ -186,13 +160,24 @@ public class InstrumentationVisitor extends ASTVisitor {
         TextElement textElement = ast.newTextElement();
         int lineNo = compilationUnit.getLineNumber(statement.getStartPosition());
         String type = null;
+        Block block = null;
         if (statement instanceof IfStatement) {
+            IfStatement ifStatement = (IfStatement) statement;
+            Statement thenStatement = ifStatement.getThenStatement();
+            if(!(thenStatement instanceof ReturnStatement))
+                block = (Block) ifStatement.getThenStatement();
             type = "If";
         } else if (statement instanceof WhileStatement) {
+            WhileStatement whileStatement = (WhileStatement) statement;
+            block = (Block) whileStatement.getBody();
             type = "While";
         } else if (statement instanceof ForStatement) {
+            ForStatement forStatement = (ForStatement) statement;
+            block = (Block) forStatement.getBody();
             type = "For";
         } else if (statement instanceof EnhancedForStatement) {
+            EnhancedForStatement enhancedForStatement = (EnhancedForStatement) statement;
+            block = (Block) enhancedForStatement.getBody();
             type = "Enhanced For";
         } else if (statement instanceof ReturnStatement) {
             type = "Return";
@@ -201,6 +186,11 @@ public class InstrumentationVisitor extends ASTVisitor {
         } /*else if (statement instanceof SwitchCase) {
             type = "Switch Case";
         }*/ else if (statement instanceof VariableDeclarationStatement) {
+            List<VariableDeclarationFragment> fragments = ((VariableDeclarationStatement) statement).fragments();
+            /*for(VariableDeclarationFragment fragment : fragments){
+                System.out.println("Line " + lineNo + "Variable declaration >>" + fragment.getName() + " value "+ fragment.getAST().hasResolvedBindings());
+            }*/
+
             type = "Assign";
         } /*else if (statement instanceof ExpressionStatement) {
             type = "Expression";
@@ -210,52 +200,75 @@ public class InstrumentationVisitor extends ASTVisitor {
         statement.accept(new ASTVisitor() {
             @Override
             public boolean visit(SimpleName simpleName) {
-                if(!ignoredSimpleNames.contains(simpleName.getIdentifier()))
+                if(!ignoredSimpleNames.contains(simpleName.getIdentifier()) && !Character.isUpperCase(simpleName.getIdentifier().charAt(0)))
                     simpleNames.add(simpleName);
                 return super.visit(simpleName);
             }
         });
         Set<String> simpleNameSet = new HashSet<>();
-        for (SimpleName simpleName : simpleNames) {
 
+        for (SimpleName simpleName : simpleNames) {
+            if(simpleName.getParent().getNodeType() == ASTNode.METHOD_INVOCATION || simpleName.getParent().getNodeType() == ASTNode.METHOD_DECLARATION){
+                continue;
+            }
             int lineNoOfElement = compilationUnit.getLineNumber(simpleName.getStartPosition());
 
-            if (lineNoOfElement == lineNo && !simpleNameSet.contains(simpleName.getIdentifier()) && !methods.contains(simpleName)) {
+            if (lineNoOfElement == lineNo && !simpleNameSet.contains(simpleName.getIdentifier()) && !methods.contains(simpleName.getIdentifier()) && !simpleName.getIdentifier().equals(className)) {
                 simpleNameSet.add(simpleName.getIdentifier());
-                s += ",new Pair(\"" + simpleName.getFullyQualifiedName() + "\"," + simpleName.getIdentifier() + ")";
+                s += ",new PairClass(\"" + simpleName.getFullyQualifiedName() + "\",TemplateClass.valueOf(" + simpleName.getIdentifier() + "))";
             }
         }
         s += ");";
         textElement.setText(s);
 
-        ListRewrite listRewrite = astRewrite.getListRewrite(statement.getParent(), Block.STATEMENTS_PROPERTY);
-        if(type.equals("Assign")){
-            listRewrite.insertAfter(textElement, statement, null);
-        } else {
-            listRewrite.insertBefore(textElement, statement, null);
+
+        ListRewrite listRewrite = null;
+
+        if(type.equalsIgnoreCase("If") || type.equalsIgnoreCase("While") || type.equalsIgnoreCase("For") || type.equalsIgnoreCase("Enhanced For")){
+
+            textElement.setText(s);
+            if(null != block) {
+                listRewrite = astRewrite.getListRewrite(block, Block.STATEMENTS_PROPERTY);
+                listRewrite.insertFirst(textElement, null);
+            } else {
+                listRewrite = astRewrite.getListRewrite(statement.getParent(), Block.STATEMENTS_PROPERTY);
+                listRewrite.insertBefore(textElement, statement,null);
+            }
+
+        } else{
+            ASTNode parentNode = statement.getParent();
+            if(parentNode.getNodeType() == ASTNode.SWITCH_STATEMENT){
+                listRewrite = astRewrite.getListRewrite(parentNode, SwitchStatement.STATEMENTS_PROPERTY);
+            } else {
+                listRewrite = astRewrite.getListRewrite(parentNode, Block.STATEMENTS_PROPERTY);
+            }
+
+            if(type.equals("Assign")){
+                listRewrite.insertAfter(textElement, statement, null);
+
+            } else {
+                //System.out.println(parentNode);
+                listRewrite.insertBefore(textElement, statement, null);
+            }
         }
+
 
     }
 
     public void addImport(String importStatement){
-        //ListRewrite listRewrite = astRewrite.getListRewrite(compilationUnit.findDeclaringNode(), Block.STATEMENTS_PROPERTY);
-        //listRewrite.insertBefore(textElement, statement, null);
-        System.out.println(compilationUnit.getTypeRoot() instanceof ICompilationUnit);
-        ImportRewrite importRewrite = ImportRewrite.create(compilationUnit, true);
-        importRewrite.addImport(importStatement);
-        try {
-            TextEdit textEdit = importRewrite.rewriteImports(null);
-            textEdit.apply(sourceDocument);
-        } catch (CoreException e) {
-            e.printStackTrace();
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-        }
+
+        AST ast = compilationUnit.getAST();
+        ImportDeclaration importDeclaration = ast.newImportDeclaration();
+        importDeclaration.setName(ast.newName(importStatement));
+        //List imports = compilationUnit.imports();
+        //imports.add(importDeclaration);
+        compilationUnit.imports().add(importDeclaration);
+
 
     }
 
 
-    public List<MethodDeclaration> getMethods() {
+    public List<String> getMethods() {
         return methods;
     }
 

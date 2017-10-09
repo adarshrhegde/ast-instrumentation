@@ -2,6 +2,7 @@ package com.uic.ahegde5.instrumentation.parser;
 
 import com.uic.ahegde5.instrumentation.utility.JavaFileListing;
 import com.uic.ahegde5.instrumentation.utility.FIleUtility;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jdt.core.JavaCore;
@@ -40,7 +41,6 @@ public class InstrumentationParser {
         parser.setCompilerOptions(options);
 
         String unitName = filePath.substring(filePath.lastIndexOf("\\") + 1,filePath.length());
-        System.out.println("File loaded : " + filePath);
         parser.setUnitName(unitName);
         String[] sources = { directoryPath };
        // Document document = new Document("D:\\IntellijWorkspace\\JavaProblems\\src");
@@ -65,32 +65,50 @@ public class InstrumentationParser {
 
         try {
             List<String> filePathList = JavaFileListing.listFilesInDirectory(directoryPath, backupPath);
-            InstrumentationVisitor instrumentationVisitor = new InstrumentationVisitor();
             for(String filePath : filePathList) {
+                InstrumentationVisitor instrumentationVisitor = new InstrumentationVisitor();
+                System.out.println("File loaded : " + filePath);
 
+                //Adding the instrumentation code here
                 CompilationUnit compilationUnit = parse(filePath);
+                compilationUnit.recordModifications();
                 instrumentationVisitor.setCompilationUnit(compilationUnit);
                 instrumentationVisitor.setFilePath(filePath);
                 instrumentationVisitor.setSourceDocument(new Document(FIleUtility.readFileToString(instrumentationVisitor.getFilePath())));
                 ASTRewrite astRewrite = ASTRewrite.create(compilationUnit.getAST());
                 instrumentationVisitor.setAstRewrite(astRewrite);
+
                 compilationUnit.accept(instrumentationVisitor);
+
+                TextEdit edits = astRewrite.rewriteAST(instrumentationVisitor.getSourceDocument(), null);
+                edits.apply(instrumentationVisitor.getSourceDocument());
+                FileUtils.write(new File(filePath), instrumentationVisitor.getSourceDocument().get());
+
+                //Adding imports to the file
+                CompilationUnit compilationUnitForImport = parse(filePath);
+                compilationUnitForImport.recordModifications();
+                instrumentationVisitor.setFilePath(filePath);
+                instrumentationVisitor.setCompilationUnit(compilationUnitForImport);
+                instrumentationVisitor.setSourceDocument(new Document(FIleUtility.readFileToString(instrumentationVisitor.getFilePath())));
+                instrumentationVisitor.addImport("com.uic.ahegde5.instrumentation.utility.TemplateClass");
+                instrumentationVisitor.addImport("com.uic.ahegde5.instrumentation.utility.PairClass");
                 try {
-
-                    TextEdit edits = astRewrite.rewriteAST(instrumentationVisitor.getSourceDocument(),null);
-                    edits.apply(instrumentationVisitor.getSourceDocument());
-
-
+                    TextEdit textEdit = compilationUnitForImport.rewrite(instrumentationVisitor.getSourceDocument(),null);
+                    textEdit.apply(instrumentationVisitor.getSourceDocument());
+                    FileUtils.write(new File(filePath),instrumentationVisitor.getSourceDocument().get());
                 } catch (BadLocationException e) {
-                    System.out.println(e);
+                    System.out.println("Error while adding import statement " + filePath);
+                } catch (IOException e) {
+                    System.out.println("Error while adding import statement " + filePath);
                 }
-                //instrumentationVisitor.addImport("com.uic.ahegde5.instrumentation.utility.TemplateClass");
-                FileUtils.write(new File(filePath),instrumentationVisitor.getSourceDocument().get());
 
             }
+            System.out.println(filePathList.size() + " Files parsed and instrumented");
         } catch (ExecutionException e) {
             System.out.println(e);
         } catch (IOException e) {
+            System.out.println(e);
+        } catch (BadLocationException e) {
             System.out.println(e);
         }
     }

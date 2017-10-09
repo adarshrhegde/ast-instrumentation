@@ -56,8 +56,9 @@ dependencies {
     compile group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.apt.core', version : '3.4.100'
     compile group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.annotation', version : '2.1.0'
     compile group: 'org.eclipse.jdt.compiler', name: 'tool', version: '1.0.0-v_771'
-    compile group: 'org.eclipse.jdt', name: 'core', version: '3.7.1'
+    compile group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.10.0'
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'log4j', name: 'log4j', 'version': '1.2.17'
 
 }
 repositories {

@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +28,6 @@ public class JavaFileListing {
         for(File file : listOfFilesInDirectory){
 
             if(file.isDirectory()){
-                System.out.println("calling getName() >" + file.getName());
                 List<String> fileList = listFilesInDirectory(file.toPath().toString(), backupPath + "\\" + file.getName());
                 if(null != fileList && !fileList.isEmpty())
                     listOfFiles.addAll(fileList);

@@ -1,14 +1,14 @@
 package com.uic.ahegde5.instrumentation.utility;
 
-public class Pair {
+public class PairClass {
 
     private String qualifiedName;
     private String value;
 
-    public Pair() {
+    public PairClass() {
     }
 
-    public Pair(String qualifiedName, String value) {
+    public PairClass(String qualifiedName, String value) {
         this.qualifiedName = qualifiedName;
         this.value = value;
     }
@@ -31,6 +31,8 @@ public class Pair {
 
     @Override
     public String toString() {
-        return getQualifiedName() + " = " + getValue();
+        try {
+            return getQualifiedName() + " = " + getValue();
+        } catch (Exception e){ return null; }
     }
 }

@@ -1,19 +1,32 @@
 package com.uic.ahegde5.instrumentation.utility;
 
-import java.util.Map;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 public class TemplateClass {
 
-    public static void instrum(int lineNo, String operation, Pair... pairs){
+    final static Logger logger = Logger.getLogger(TemplateClass.class.getName());
+
+    public static void instrum(int lineNo, String operation, PairClass... pairs){
+        PropertyConfigurator.configure("log4j.properties");
 
         try {
-            System.out.print("Line" + String.valueOf(lineNo) + " " + operation + " ");
+            String s = ("Line: " + String.valueOf(lineNo) + ", " + operation + " ");
             if (null != pairs && pairs.length > 0)
-                for (Pair pair : pairs) {
-                    System.out.print(", " + pair.toString());
+                for (PairClass pair : pairs) {
+                    s += (", " + pair.toString());
                 }
-            System.out.println();
-        } catch (Exception e){}
+            logger.info(s);
+        }
+        catch (Exception e){}
+    }
+
+    public static String valueOf(Object input){
+        if(null != input){
+            return String.valueOf(input);
+        }
+        return "null";
     }
 
 
