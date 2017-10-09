@@ -2,6 +2,7 @@
 
 Applications and their repositories:
 1. Instrumenting Application(ast-instrumentation) - Adarsh_Hegde_hw2
+
 2. Instrumented Application (Apache Commons Lang) - Instrumentated_App_Hw2
 
 Read access to both repositories is provided to graders
@@ -15,6 +16,8 @@ Once the instrumenting application is setup in the IDE open Main.java.
 The main class consists of the following statement. Make changes to source_dir(source code directory) and backup_dir(Backup directory) in the statement.
 InstrumentationParser instrumentationParser = new InstrumentationParser(source_dir, backup_dir);
 
+The execution of the main class parses the entire source application and adds instrumentation statements.
+
 Running Unit test cases of the instrumenting application:
 
 Execute the following gradle command : 
@@ -26,9 +29,11 @@ I have currently added the jar of the instrumenting app to the build path of the
 
 
 
-How to run the instrumented application:
 
-Apache Commons Lang is a library containing Java utility classes that provide helper utilities for the java.lang API.
+
+**How to run the instrumented application:**
+
+Application : Apache Commons Lang is a library containing Java utility classes that provide helper utilities for the java.lang API.
 
 **Implementation of Junit test cases details:**
 
