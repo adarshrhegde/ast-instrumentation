@@ -14,7 +14,7 @@ How to run the instrumenting application:
 Once the instrumenting application is setup in the IDE open Main.java.
 
 The main class consists of the following statement. Make changes to source_dir(source code directory) and backup_dir(Backup directory) in the statement.
-InstrumentationParser instrumentationParser = new InstrumentationParser(source_dir, backup_dir);
+    InstrumentationParser instrumentationParser = new InstrumentationParser(source_dir, backup_dir);
 
 The execution of the main class parses the entire source application and adds instrumentation statements.
 
