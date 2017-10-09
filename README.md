@@ -41,7 +41,9 @@ Application : Apache Commons Lang is a library containing Java utility classes t
 
     gradle test
     
-    The trace(output) of the app is written to a file. The cofiguration of this file is given in log4j.properties. Currently the file path is set to :
+** Output:**
+    
+The trace(output) of the app is written to a file. The cofiguration of this file is given in log4j.properties. Currently the file path is set to :
         log4j.appender.file.File=D:\\application.log (check this file to see the output of the instrumenting statements)
         
         
