@@ -206,7 +206,7 @@ public class InstrumentationVisitor extends ASTVisitor {
             }
         });
         Set<String> simpleNameSet = new HashSet<>();
-
+        //MethodDeclaration parentMethod = getParentMethod(statement.getParent());
         for (SimpleName simpleName : simpleNames) {
             if(simpleName.getParent().getNodeType() == ASTNode.METHOD_INVOCATION || simpleName.getParent().getNodeType() == ASTNode.METHOD_DECLARATION){
                 continue;
@@ -215,7 +215,7 @@ public class InstrumentationVisitor extends ASTVisitor {
 
             if (lineNoOfElement == lineNo && !simpleNameSet.contains(simpleName.getIdentifier()) && !methods.contains(simpleName.getIdentifier()) && !simpleName.getIdentifier().equals(className)) {
                 simpleNameSet.add(simpleName.getIdentifier());
-                s += ",new PairClass(\"" + simpleName.getFullyQualifiedName() + "\",TemplateClass.valueOf(" + simpleName.getIdentifier() + "))";
+                s += ",new PairClass(\"" + className + "." + simpleName.getFullyQualifiedName() + "\",TemplateClass.valueOf(" + simpleName.getIdentifier() + "))";
             }
         }
         s += ");";
@@ -254,6 +254,14 @@ public class InstrumentationVisitor extends ASTVisitor {
 
 
     }
+
+    /*private MethodDeclaration getParentMethod(ASTNode node) {
+        if(node instanceof MethodDeclaration){
+            return (MethodDeclaration) node;
+        }
+        return getParentMethod(node.getParent());
+
+    }*/
 
     public void addImport(String importStatement){
 
