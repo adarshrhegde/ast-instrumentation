@@ -1,13 +1,5 @@
 **Instrumentation of Apache Commons Lang**
 
-Applications and their repositories:
-
- Instrumenting Application(ast-instrumentation) - Adarsh_Hegde_hw2  |   
- Instrumented Application (Apache Commons Lang) - Instrumentated_App_Hw2
- 
-To instrument the application from scratch use the source code of HW1 - Adarsh_Hegde_hw1. This is the same code used for this application.
-
-Read access to both repositories is provided to graders
 
 The application ast-instrumentation is an instrumenting app that takes the source code of another app as input and creates an AST using eclipse JDT.
 The AST is then modified to add instrumentation code. 
